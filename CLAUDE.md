@@ -14,11 +14,17 @@ Sending a line to Review is a cost. Crediting the wrong family is a wrong answer
 Run `./check.sh`. All three gates must pass. Paste the last four lines of its output in your report.
 Do not edit tests to make them pass; if a test is wrong, say so and stop.
 
+## Before you push
+Nothing from a real roster or bank export goes into a tracked file or a commit message. Examples
+use invented names. Run `python3 namecheck.py <roster> <bank>` and fix every hit; `--ignore` is
+for plain words only.
+
 ## Layout
 - `engine.py`      allocation logic. Add behaviour here. Keep functions pure.
 - `reconcile.py`   loads the ledger, calls the engine, writes Review / Position / Summary.
 - `build_ledger.py` roster + bank export -> structured workbook.
 - `score.py`       accuracy against ground truth, by failure mode.
+- `namecheck.py`   real names in tracked files or unpushed commits. Run before a push.
 - `tests/test_engine.py`   fast unit tests (ms). Add one for every new behaviour.
 - `tests/test_pipeline.py` end-to-end over three generated seeds.
 
