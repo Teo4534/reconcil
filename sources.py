@@ -3,8 +3,7 @@ sources.py - what the roster and the bank export look like, as data. The one pla
 
 build_ledger.py reads the files through these tables and preflight.py checks them against the same
 tables, so the two cannot disagree about what a valid file is. A roster with a new heading, or a
-bank that labels a column differently, is one string added here. Where the roster sits inside a
-workbook (which sheet, how many rows above the headings) is found here too, by locate_roster.
+bank that labels a column differently, is one string added here.
 """
 import pandas as pd
 
@@ -44,18 +43,12 @@ INVOICE_BLANKS = frozenset({"?", "??", "-", "n/a", "tbc", "nan"})
 NAME_NOISE = frozenset({"FRATERIE", "FRERE", "SOEUR", "ESSAIS", "ESSAI", "NOUVEAU", "NOUVELLE"})
 
 
-# Rows of furniture a sheet may carry above its headings: teacher, assistant, class name, room.
-# The office's master workbook puts the headings on row 5. Anything deeper is not a roster sheet.
+# rows of titles a sheet may carry above its headings; the office workbook has four
 HEADER_SCAN_ROWS = 12
 
 
 def header_row(rows):
-    """Index of the first row that names every required roster field, or None.
-
-    `rows` is a sequence of rows, each a sequence of cell values. A cell matches a field when it
-    equals one of that field's aliases in ROSTER_COLS, after stripping. Exact, not fuzzy: a sheet
-    that says LES ELEVES but has no invoice column is a class list, not the roster.
-    """
+    """Index of the first row naming every required roster field, or None."""
     for i, row in enumerate(rows):
         cells = {str(v).strip() for v in row if v is not None and str(v).strip() != ""}
         if all(any(alias in cells for alias in ROSTER_COLS[field_]) for field_ in ROSTER_REQUIRED):
@@ -64,15 +57,7 @@ def header_row(rows):
 
 
 def locate_roster(path):
-    """(sheet name, header row index) of the roster inside a workbook, or None if no sheet has one.
-
-    The office keeps the roster inside its master workbook: a sheet per year, a waiting list, staff,
-    and on each year's sheet four rows of teacher and class names above the headings. The first
-    real run needed that sheet copied out by hand with the top rows deleted. This finds it instead:
-    the first sheet whose top rows contain a heading row naming every required field. Older years'
-    sheets carry names but no invoice or fee columns, so they are never chosen. A file that is only
-    the roster, headings on row 1, is the trivial case.
-    """
+    """(sheet, header row index) of the first sheet whose top rows carry the roster headings, or None."""
     book = pd.ExcelFile(path)
     for sheet in book.sheet_names:
         top = pd.read_excel(book, sheet_name=sheet, header=None, nrows=HEADER_SCAN_ROWS)

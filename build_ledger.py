@@ -79,8 +79,6 @@ def pick(df, field_):
             return name
     return None
 
-# The roster may arrive as the office's whole workbook: the right sheet among several, with rows of
-# teacher and class names above the headings. Find it rather than assume sheet 1, row 1.
 where = locate_roster(ROSTER)
 if where is None:
     top = pd.read_excel(ROSTER, header=None, nrows=HEADER_SCAN_ROWS)

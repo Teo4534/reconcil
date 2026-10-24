@@ -256,14 +256,7 @@ def test_a_different_term_needs_no_code_edit(tmp_path):
 
 
 def test_the_roster_is_found_inside_the_office_workbook(tmp_path):
-    """The office keeps the roster in a master workbook, not in a clean one-sheet file.
-
-    Several sheets (a waiting list, staff, one sheet per year), and on the roster sheet four rows
-    of teacher and class names above the headings. The first real run needed that sheet copied out
-    by hand with the top rows deleted. build_ledger.py and preflight.py must find the roster
-    themselves: the first sheet whose top rows carry a heading row naming every required field,
-    and the same ledger must come out as from the clean file.
-    """
+    """Same ledger from the roster buried in a multi-sheet workbook as from the clean file."""
     run(ROOT / "generate_fake_data.py", tmp_path, "--seed", 20260101)
     plain, bank = tmp_path / "roster.xlsx", tmp_path / "bank.xlsx"
     rows = list(load_workbook(plain, read_only=True).active.iter_rows(values_only=True))
