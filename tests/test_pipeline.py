@@ -234,10 +234,12 @@ def test_position_rows_are_banded_and_each_fill_matches_its_status(pipeline):
                 review[c.strip()] += 1
     RED, AMBER, GREEN = "00FCE4E4", "00FFF2CC", "00E2EFDA"
     bands = []
+    labels = 0
     for row in wp.iter_rows(min_row=5, max_row=wp.max_row):
         fid = row[0].value
-        if not fid:
-            break
+        if not row[1].value:            # a band label or the blank row between bands
+            labels += bool(fid)
+            continue
         exp, g = round(rules[fid], 2), round(got[fid], 2)
         bal = round(exp - g, 2)
         if exp == 0:
@@ -253,6 +255,7 @@ def test_position_rows_are_banded_and_each_fill_matches_its_status(pipeline):
         assert row[0].fill.fgColor.rgb == want, f"{fid}: status {st}, balance {bal}, fill {row[0].fill.fgColor.rgb}"
         bands.append((RED, AMBER, GREEN).index(want))
     assert bands and bands == sorted(bands), "Position rows are not grouped red, then amber, then green"
+    assert labels == len(set(bands)), "each band should open with exactly one label row"
 
 
 def test_no_money_disappears(pipeline):

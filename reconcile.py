@@ -175,8 +175,19 @@ def write_outputs(wb, rows, roster, cfg, report_date):
     inv_no = {}
     for row in wb["Families"].iter_rows(min_row=4, values_only=True):
         if row[0]: inv_no[row[0]] = row[4]
-    for i, fid in enumerate(order):
-        r = 5 + i
+    # A labelled row opens each band and a blank row separates them, so the sheet reads as three lists.
+    LABEL = ("Owing", "Check before chasing", "Settled")
+    row_of, r, prev = {}, 5, None
+    for fid in order:
+        b = band(fid)
+        if b != prev:
+            if prev is not None:
+                r += 1
+            put(wp, r, 1, LABEL[b], BOLD)
+            r += 1
+        row_of[fid], prev, r = r, b, r + 1
+    for fid in order:
+        r = row_of[fid]
         put(wp, r, 1, fid, BLUE); put(wp, r, 2, fam_name[fid], BLUE); put(wp, r, 3, billed[fid], BLUE)
         put(wp, r, 4, inv_no.get(fid, ""), BLUE)
         put(wp, r, 5, f'=SUMIFS(Children!$R$4:$R$500,Children!$B$4:$B$500,$A{r},Children!$F$4:$F$500,"Enrolled",Children!$G$4:$G$500,"{TERM_CUR}")', fmt=GBP)
@@ -196,10 +207,10 @@ def write_outputs(wb, rows, roster, cfg, report_date):
         if prior_money[fid]: look.append(f"£{prior_money[fid]:,.2f} tagged {TERM_PRIOR} looks like a {TERM_CUR} payment")
         put(wp, r, 13, "; ".join(look), GREEN)
     # static fills: other spreadsheet apps drop conditional formatting on import
-    for i, fid in enumerate(order):
+    for fid in order:
         fill = (RED_L, AMBER_L, GREEN_L)[band(fid)]
-        for c in range(1, 14): wp.cell(5 + i, c).fill = fill
-    last_p = 4 + len(order)
+        for c in range(1, 14): wp.cell(row_of[fid], c).fill = fill
+    last_p = max(row_of.values()) if row_of else 4
     rng = f"A5:M{last_p}"
     wp.conditional_formatting.add(rng, FormulaRule(formula=['OR($M5<>"",$H5="in review",$H5="overpaid")'], fill=AMBER_L))
     wp.conditional_formatting.add(rng, FormulaRule(formula=['OR($H5="settled",$H5="no charge")'], fill=GREEN_L))
