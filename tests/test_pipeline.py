@@ -356,6 +356,17 @@ def test_the_roster_is_found_inside_the_office_workbook(tmp_path):
     assert bad.returncode != 0 and "no sheet has a heading row" in bad.stdout + bad.stderr
 
 
+def test_namecheck_finds_a_fixture_name_in_the_tracked_tree(tmp_path):
+    """Given the generated files as if real, it must flag the fixture families the README quotes."""
+    run(ROOT / "generate_fake_data.py", tmp_path, "--seed", 20260101)
+    args = [sys.executable, str(ROOT / "namecheck.py"), str(tmp_path / "roster.xlsx"), str(tmp_path / "bank.xlsx"), "--base", "HEAD"]
+    r = subprocess.run(args, cwd=ROOT, capture_output=True, text=True)
+    assert r.returncode == 1, r.stdout + r.stderr
+    assert "README.md:" in r.stdout and "MAALOUF" in r.stdout, r.stdout
+    r2 = subprocess.run(args + ["--ignore", "MAALOUF"], cwd=ROOT, capture_output=True, text=True)
+    assert "MAALOUF " not in r2.stdout and "ignored on request: MAALOUF" in r2.stdout, r2.stdout
+
+
 def test_the_workbook_has_the_sheets_a_reviewer_needs(pipeline):
     for sheet in ("Summary", "README", "Rates", "Terms", "Families", "Children", "Receipts", "Review", "Position"):
         assert sheet in pipeline["wb"].sheetnames
