@@ -210,6 +210,54 @@ def test_the_fee_rules_reproduce_the_invoices(pipeline):
         f"the planted {PLANTED_SUPPLIES_ERROR:.2f} supplies error was not detected: {mismatched}"
 
 
+def test_position_rows_are_banded_and_each_fill_matches_its_status(pipeline):
+    """Every row's fill matches a status recomputed from the workbook's inputs; bands run red, amber, green."""
+    wb = pipeline["wb"]
+    wp, ch, rc = wb["Position"], wb["Children"], wb["Receipts"]
+    term = wb["Terms"].cell(5, 1).value
+    f = fee_inputs(wb)
+    enrolled = [r for r in ch.iter_rows(min_row=4, values_only=True) if r[0] and r[5] == "Enrolled"]
+    siblings = Counter(r[1] for r in enrolled)
+    rules = defaultdict(float)
+    for r in enrolled:
+        if r[6] == term:
+            rules[r[1]] += expected_charge(r, siblings[r[1]], f)
+    got, review = defaultdict(float), Counter()
+    for r in rc.iter_rows(min_row=4, values_only=True):
+        if r[0] is None:
+            break
+        if r[8] in AUTO_TIERS and r[9]:
+            if r[4] == term:
+                got[r[9]] += float(r[1] or 0)
+        elif r[8] not in AUTO_TIERS and r[10]:
+            for c in str(r[10]).split(","):
+                review[c.strip()] += 1
+    RED, AMBER, GREEN = "00FCE4E4", "00FFF2CC", "00E2EFDA"
+    bands = []
+    labels = 0
+    for row in wp.iter_rows(min_row=5, max_row=wp.max_row):
+        fid = row[0].value
+        if not row[1].value:            # a band label or the blank row between bands
+            labels += bool(fid)
+            continue
+        exp, g = round(rules[fid], 2), round(got[fid], 2)
+        bal = round(exp - g, 2)
+        if exp == 0:
+            st = "no charge"
+        elif g <= 0:
+            st = "in review" if review[fid] else "unpaid"
+        elif abs(bal) <= 0.5:
+            st = "settled"
+        else:
+            st = "part paid" if bal > 0 else "overpaid"
+        look = bool(row[12].value)
+        want = AMBER if (look or st in ("in review", "overpaid")) else RED if st in ("unpaid", "part paid") else GREEN
+        assert row[0].fill.fgColor.rgb == want, f"{fid}: status {st}, balance {bal}, fill {row[0].fill.fgColor.rgb}"
+        bands.append((RED, AMBER, GREEN).index(want))
+    assert bands and bands == sorted(bands), "Position rows are not grouped red, then amber, then green"
+    assert labels == len(set(bands)), "each band should open with exactly one label row"
+
+
 def test_no_money_disappears(pipeline):
     total = sum(g["amount"] for g, _ in pipeline["pairs"])
     allocated = sum(g["amount"] for g, _ in pipeline["pairs"] if g["tier"] in AUTO_TIERS)
