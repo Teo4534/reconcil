@@ -23,6 +23,9 @@ for plain words only.
 - `engine.py`      allocation logic. Add behaviour here. Keep functions pure.
 - `reconcile.py`   loads the ledger, calls the engine, writes Review / Position / Summary.
 - `build_ledger.py` roster + bank export -> structured workbook.
+- `terms.py`       the school's terms as data; next term is a new entry and `--term`.
+- `sources.py`     roster and bank headings as data; where the roster sits in a workbook.
+- `preflight.py`   checks a real roster and bank export before a run. Changes nothing.
 - `score.py`       accuracy against ground truth, by failure mode.
 - `namecheck.py`   real names in tracked files or unpushed commits. Run before a push.
 - `tests/test_engine.py`   fast unit tests (ms). Add one for every new behaviour.

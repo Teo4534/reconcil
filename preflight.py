@@ -3,13 +3,8 @@ preflight.py - check a real roster and bank export against what build_ledger.py 
 
     python3 preflight.py STUDENTS_2026.xlsx BANK.xlsx
 
-build_ledger.py reads the roster by heading, under any alias listed in sources.py, on whichever
-sheet and row of the workbook carries those headings. It reads the bank export by heading when the
-file has one, else by column position. A roster whose headings are spelled some new way is skipped
-entirely; a headerless bank export with the columns in a different order produces wrong answers
-silently, which is worse.
-
-This reports what it found, what is missing, and what to do about it. It changes nothing.
+Reads both files the way build_ledger.py does (headings from sources.py, roster found on whichever
+sheet and row carries them) and reports what is missing. Changes nothing.
 """
 import sys
 from pathlib import Path
